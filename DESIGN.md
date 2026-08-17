@@ -120,17 +120,16 @@ Host config:
 
 
 ## Trade fairness
-| Fairness problem          | Our solution                                         |
-| ------------------------- |------------------------------------------------------|
-| Two orders at same price  | Matcher sequence determines priority                 |
-| Different gateways        | All converge on one shard arbitration point          |
-| Client timestamps differ  | Ignore for matching priority                         |
-| Gateway clocks differ     | Ignore for matching priority                         |
-| Thread scheduling differs | Single-writer matcher                                |
-| Matcher crashes           | Replicated ordered command stream preserves priority |
-| Packet batching           | Must preserve authoritative order                    |
-| Cancel vs fill race       | Whichever gets the earlier engine sequence wins      |
-| Geographic latency        | Not normalized; colocation optional                  |
+| Fairness problem          | Our solution                                                                             |
+| ------------------------- |------------------------------------------------------------------------------------------|
+| Two orders at same price  | Matcher sequence determines priority                                                     |
+| Different gateways        | All converge on one shard arbitration point                                              |
+| Client timestamps differ  | Ignore for matching priority (we trust only our own timestamps, not client's)            |
+| Gateway clocks differ     | Ignore for matching priority (whatever lands first in the matching engine, has priority) |
+| Thread scheduling differs | Single-writer matcher                                                                    |
+| Matcher crashes           | Replicated ordered command stream preserves priority                                     |
+| Cancel vs fill race       | Whichever gets the earlier engine sequence wins                                          |
+| Geographic latency        | Not normalized; colocation optional                                                      |
 
 ## Robustness to bad clients
 We address it primarily at the gateway, before traffic reaches risk or matching:
@@ -151,7 +150,7 @@ We address it primarily at the gateway, before traffic reaches risk or matching:
 We can have separate matching engine processes (1 per CPU core per market), in practice only hot markets are isolated.
 
 ### Limits to participants and connections
-Gateway processes can be scaled vertically and horizontally.
+Gateway processes can be scaled vertically and horizontally. We do need to be aware to control internal latency to the matching engines.
 
 ### Limits to number of symbols (assets)
 Low activity markets can be processed in the same process. Otherwise, matching engines scale vertically and horizontally.
